@@ -104,9 +104,5 @@ document.onreadystatechange = function(){
         var Coor2 = new Coordinate(Math.floor(Math.random()*1152),Math.floor(Math.random()*648));
         Renderer.MakeLine(Coor1,Coor2);
     }
-
-
-
-
     Renderer.Context.putImageData(Renderer.PixelBuffer,0,0)
 }
