@@ -10,15 +10,15 @@ document.onreadystatechange = function(){
         this.A = a;
     };
 
-    function Coordinate (Xaxis,Yaxis,Zaxis) {
-        this.Xaxis = Xaxis;
-        this.Yaxis = Yaxis;
-        this.Zaxis = Zaxis;
-    }
-
     Size = {
         Width : 1152,
         Height : 648 
+    }
+
+    function vertices(x,y,z){
+        this.X = x;
+        this.Y = y;
+        this.Z = z;
     }
     
     window.Renderer = {
@@ -57,11 +57,11 @@ document.onreadystatechange = function(){
     //     }
     // }
 
-    Renderer.MakeLine = function(Coor1,Coor2){
-        var x1 = Math.floor(Coor1.Xaxis);
-        var x2 = Math.floor(Coor2.Xaxis);
-        var y1 = Math.floor(Coor1.Yaxis);
-        var y2 = Math.floor(Coor2.Yaxis);
+    Renderer.MakeLine = function(x1,y1,x2,y2){
+        x1 = Math.floor(x1);
+    	x2 = Math.floor(x2);
+        y1 = Math.floor(y1);
+        y2 = Math.floor(y2);
         var dx = x2-x1;
         var dy = y2-y1;
         var tmp_color = new Color;
@@ -105,38 +105,93 @@ document.onreadystatechange = function(){
         }
     }
 
-    Renderer.Draw = function(Model){
-        for (var face of Model.Face){
-            var Coor1 = new Coordinate;
-            var Coor2 = new Coordinate;
-            var Coor3 = new Coordinate;
 
-            Coor1.Xaxis = (Model.Vertex[face.V1 - 1].X)*300 + 500;
-            Coor1.Yaxis = (Model.Vertex[face.V1 - 1].Y)*300 + 300; 
-            Coor1.Zaxis = (Model.Vertex[face.V1 - 1].Z)*300;
+    // for (var face of Model.Face){
+    //     var x1 = (Model.Vertex[face.V1 - 1].X)*300 + 500;
+    //     var y1 = (Model.Vertex[face.V1 - 1].Y)*300 + 300; 
 
-            Coor2.Xaxis = (Model.Vertex[face.V2 - 1].X)*300 + 500;
-            Coor2.Yaxis = (Model.Vertex[face.V2 - 1].Y)*300 + 300; 
-            Coor2.Zaxis = (Model.Vertex[face.V2 - 1].Z)*300;
+    //     var x2 = (Model.Vertex[face.V2 - 1].X)*300 + 500;
+    //     var y2 = (Model.Vertex[face.V2 - 1].Y)*300 + 300; 
 
-            Coor3.Xaxis = (Model.Vertex[face.V3 - 1].X)*300 + 500;
-            Coor3.Yaxis = (Model.Vertex[face.V3 - 1].Y)*300 + 300; 
-            Coor3.Zaxis = (Model.Vertex[face.V3 - 1].Z)*300;
+    //     var x3 = (Model.Vertex[face.V3 - 1].X)*300 + 500;
+    //     var y3 = (Model.Vertex[face.V3 - 1].Y)*300 + 300; 
 
-            Renderer.MakeLine(Coor1,Coor2);
-            Renderer.MakeLine(Coor2,Coor3);
-            Renderer.MakeLine(Coor1,Coor3);
-        }
-    };
-    Renderer.Draw(Model);
-
-
-
-    // for (var count = 200; count < 300; count++){
-    //     var Coor1 = new Coordinate(10*count,200);
-    //     var Coor2 = new Coordinate(10*count,500);
-    //     Renderer.MakeLine(Coor1,Coor2);
+    //     Renderer.MakeLine(x1,y1,x2,y2);
+    //     Renderer.MakeLine(x3,y3,x2,y2);
+    //     Renderer.MakeLine(x3,y3,x1,y1);
     // }
+
+    Renderer.Render = function(){
+        this.Context.clearRect(0,0, this.Width, this.Height);
+        this.Context.putImageData(Renderer.PixelBuffer,0,0);
+        this.PixelBuffer.data.set(this.EmptyBuffer.data);
+    }
+
+
+    Renderer.Rotatez = function(vertex,degree){
+        var theta = (degree/360) * 2 * Math.PI;
+        var x = vertex.X * Math.cos(theta) - vertex.Y * Math.sin(theta);
+        var y = vertex.X * Math.sin(theta) + vertex.Y * Math.cos(theta);
+        var z = vertex.Z;
+        return new vertices(x,y,z);
+    }
+
+
+    Renderer.Rotatey = function(vertex,degree){
+        var theta = (degree/360) * 2 * Math.PI;
+        var x = vertex.X * Math.cos(theta) + vertex.Z * Math.sin(theta);
+        var y = vertex.Y;
+        var z = - vertex.X * Math.sin(theta) + vertex.Z * Math.cos(theta);
+        return new vertices(x,y,z);
+    }
+
+    function PerspectiveProj(vertex, distance){
+        return {
+            X: vertex.X / (1-vertex.Z/distance),
+            Y: vertex.Y / (1-vertex.Z/distance),
+            Z: vertex.Z / (1-vertex.Z/distance)
+        }
+    }
+
+    var deg = 0;
+    setInterval(function(){
+        for (var face of Model.Face){
+            var index1 = face.V1 - 1;
+            var index2 = face.V2 - 1;
+            var index3 = face.V3 - 1;
+            var v1 = Model.Vertex[index1];
+            var v2 = Model.Vertex[index2];
+            var v3 = Model.Vertex[index3];
+
+            v1 = Renderer.Rotatez(v1, 180);
+            v2 = Renderer.Rotatez(v2, 180);
+            v3 = Renderer.Rotatez(v3, 180);
+
+            v1 = Renderer.Rotatey(v1, deg);
+            v2 = Renderer.Rotatey(v2, deg);
+            v3 = Renderer.Rotatey(v3, deg);
+            
+            v1 = PerspectiveProj(v1,300);
+            v2 = PerspectiveProj(v2,300);
+            v3 = PerspectiveProj(v3,300);
+
+            x1 = 5*v1.X + 525;
+            y1 = 5*v1.Y + 550;
+            x2 = 5*v2.X + 525;
+            y2 = 5*v2.Y + 550;
+            x3 = 5*v3.X + 525;
+            y3 = 5*v3.Y + 550;
+            Renderer.MakeLine(x1,y1,x2,y2);
+            Renderer.MakeLine(x3,y3,x2,y2);
+            Renderer.MakeLine(x3,y3,x1,y1);
+        }
+    Renderer.Render();
+    deg += 0.5;
+    },100);
+
+    
+
+    
 
 
     Renderer.Context.putImageData(Renderer.PixelBuffer,0,0)
