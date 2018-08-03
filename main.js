@@ -10,9 +10,10 @@ document.onreadystatechange = function(){
         this.A = a;
     };
 
-    function Coordinate (Xaxis,Yaxis) {
+    function Coordinate (Xaxis,Yaxis,Zaxis) {
         this.Xaxis = Xaxis;
         this.Yaxis = Yaxis;
+        this.Zaxis = Zaxis;
     }
 
     Size = {
@@ -69,40 +70,74 @@ document.onreadystatechange = function(){
         tmp_color.B = 0;
         tmp_color.A = 255;
 
-        if(x2 < x1){
-            var temp = x1;
-            x1 = x2;
-            x2 = temp;
-        }
-
-        
-        if(y2 < y1){
-            var temp = y1;
-            y1 = y2;
-            y2 = temp;
-        }
-
-        if (Math.abs(x2-x1) > Math.abs(y2-y1)){
-            for (var x = x1; x < x2 ; x++){
-                var y = Math.floor(y1 + dy * (x-x1) / dx);
-                if (x >= 0){
-                    Renderer.PutColor(x, y, tmp_color);
+        if(Math.abs(dx) > Math.abs(dy)){
+            if(x2 > x1){
+                for (var x = x1; x < x2 ; x++){
+                    var y = Math.floor(y1 + dy * (x-x1) / dx);
+                    if (x >= 0 && y >= 0){
+                       Renderer.PutColor(x, y, tmp_color);
+                    }
+                }
+            } else {
+                for (var x = x2; x < x1 ; x++){
+                    var y = Math.floor(y1 + dy * (x-x1) / dx);
+                    if (x >= 0 && y >= 0){
+                        Renderer.PutColor(x, y, tmp_color);
+                    }
                 }
             }
         } else {
-            for (var y = y1; y < y2 ; y++){
-                var x = Math.floor(x1 + dx * (y-y1) / dy);
-                if (y >= 0){
-                    Renderer.PutColor(x, y, tmp_color);
+            if(y2 > y1){
+                for (var y = y1; y < y2 ; y++){
+                    var x = Math.floor(x1 + dx * (y-y1) / dy);
+                    if (x >= 0 && y >= 0){
+                       Renderer.PutColor(x, y, tmp_color);
+                    }
                 }
+            } else {
+                for (var y = y2; y < y1 ; y++){
+                    var x = Math.floor(x1 + dx * (y-y1) / dy);
+                    if (x >= 0 && y >= 0){
+                       Renderer.PutColor(x, y, tmp_color);
+                    }
+               }
             }
         }
     }
 
-    for (var count = 0; count < 15; count++){
-        var Coor1 = new Coordinate(Math.floor(Math.random()*1152),Math.floor(Math.random()*648));
-        var Coor2 = new Coordinate(Math.floor(Math.random()*1152),Math.floor(Math.random()*648));
-        Renderer.MakeLine(Coor1,Coor2);
-    }
+    Renderer.Draw = function(Model){
+        for (var face of Model.Face){
+            var Coor1 = new Coordinate;
+            var Coor2 = new Coordinate;
+            var Coor3 = new Coordinate;
+
+            Coor1.Xaxis = (Model.Vertex[face.V1 - 1].X)*300 + 500;
+            Coor1.Yaxis = (Model.Vertex[face.V1 - 1].Y)*300 + 300; 
+            Coor1.Zaxis = (Model.Vertex[face.V1 - 1].Z)*300;
+
+            Coor2.Xaxis = (Model.Vertex[face.V2 - 1].X)*300 + 500;
+            Coor2.Yaxis = (Model.Vertex[face.V2 - 1].Y)*300 + 300; 
+            Coor2.Zaxis = (Model.Vertex[face.V2 - 1].Z)*300;
+
+            Coor3.Xaxis = (Model.Vertex[face.V3 - 1].X)*300 + 500;
+            Coor3.Yaxis = (Model.Vertex[face.V3 - 1].Y)*300 + 300; 
+            Coor3.Zaxis = (Model.Vertex[face.V3 - 1].Z)*300;
+
+            Renderer.MakeLine(Coor1,Coor2);
+            Renderer.MakeLine(Coor2,Coor3);
+            Renderer.MakeLine(Coor1,Coor3);
+        }
+    };
+    Renderer.Draw(Model);
+
+
+
+    // for (var count = 200; count < 300; count++){
+    //     var Coor1 = new Coordinate(10*count,200);
+    //     var Coor2 = new Coordinate(10*count,500);
+    //     Renderer.MakeLine(Coor1,Coor2);
+    // }
+
+
     Renderer.Context.putImageData(Renderer.PixelBuffer,0,0)
 }
